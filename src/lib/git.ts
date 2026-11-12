@@ -313,3 +313,17 @@ function csvToSheetData(content: string): SheetData { const data = JSON.parse(co
 export { validateData } from './validate';
 
 async function flush(): Promise<void> { await (fs.promises as unknown as {flush:()=>Promise<void>}).flush(); }
+
+/** Restore content as a new commit. Never reset refs or delete history. */
+export async function restoreSnapshot(oid:string,expectedHead:string,expectedBranch:string):Promise<SheetData>{
+ const {prepareRestore}=await import('./diff');
+ const target=await readCommitData(oid);
+ const currentBranch=await getCurrentBranch();
+ const head=await git.resolveRef({fs,dir:GIT_DIR,ref:'HEAD'});
+ if(currentBranch!==expectedBranch||head!==expectedHead)throw new Error('The branch changed. Reopen the restore preview.');
+ const restored=prepareRestore(await readWorkingData(),target);
+ await writeWorkingData(restored);
+ await git.add({fs,dir:GIT_DIR,filepath:DATA_FILE});
+ await git.commit({fs,dir:GIT_DIR,message:`Restore snapshot ${oid.slice(0,7)}`,author:{name:'Sheetgeist User',email:'user@sheetgeist.local'},parent:[head]});
+ await flush();return restored;
+}

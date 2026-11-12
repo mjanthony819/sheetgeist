@@ -15,3 +15,5 @@ The spec made three constraints explicit before implementation: real Git rather 
 ## Features actually used
 
 Kiro CLI, project steering and spec/task files were used. No custom agents, hooks, MCP integrations, Crew workflows or property-based testing were used. Unit and browser regression tests are not described as property-based tests. No fabricated logs, screenshots or Kiro feature claims are included.
+
+Later user-directed expansion: a new workbench visual design with mobile record editing, typed commit differences and full-snapshot restoration as a new commit were implemented and independently tested after the Kiro build. These additions are not attributed to the earlier Kiro run.

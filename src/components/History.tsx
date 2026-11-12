@@ -1,101 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getCommitLog, readCommitData } from '../lib/git';
-import type { CommitInfo } from '../lib/types';
-import type { SheetData } from '../lib/types';
+import {diffSnapshots,formatCell,type SnapshotDiff} from '../lib/diff';
+import type { CommitInfo,SheetData } from '../lib/types';
 import { SpreadsheetGrid } from './SpreadsheetGrid';
-
-export function History() {
-  const [commits, setCommits] = useState<CommitInfo[]>([]);
-  const [selectedCommit, setSelectedCommit] = useState<CommitInfo | null>(null);
-  const [commitData, setCommitData] = useState<SheetData | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    loadHistory();
-  }, []);
-  
-  const loadHistory = async () => {
-    try {
-      const log = await getCommitLog(50);
-      setCommits(log);
-    } catch (error) {
-      console.error('Failed to load history:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleSelectCommit = async (commit: CommitInfo) => {
-    setSelectedCommit(commit);
-    try {
-      const data = await readCommitData(commit.oid);
-      setCommitData(data);
-    } catch (error) {
-      console.error('Failed to read commit data:', error);
-    }
-  };
-  
-  if (loading) {
-    return <div style={{ padding: '20px' }}>Loading history...</div>;
-  }
-  
-  if (commits.length === 0) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-        No commits yet. Make your first commit to see history.
-      </div>
-    );
-  }
-  
-  return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ width: '300px', borderRight: '1px solid var(--color-border)', overflow: 'auto' }}>
-        <div className="history-list">
-          {commits.map(commit => (
-            <button
-              key={commit.oid}
-              className={`commit-card ${selectedCommit?.oid === commit.oid ? 'active' : ''}`}
-              onClick={() => handleSelectCommit(commit)}
-            >
-              <div className="commit-message">{commit.message}</div>
-              <div className="commit-meta">
-                <div>{commit.author}</div>
-                <div>{new Date(commit.timestamp).toLocaleString()}</div>
-                <div className="commit-oid">{commit.oid.slice(0, 7)}</div>
-                {commit.parents.length > 1 && (
-                  <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--color-accent)' }}>
-                    Merge commit
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        {selectedCommit && commitData ? (
-          <div>
-            <div style={{ padding: '16px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-              <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
-                {selectedCommit.message}
-              </div>
-              <div style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                <div>Commit {selectedCommit.oid.slice(0, 7)}</div>
-                <div>{selectedCommit.author} · {new Date(selectedCommit.timestamp).toLocaleString()}</div>
-              </div>
-              <div style={{ marginTop: '12px', padding: '8px', background: 'var(--color-canvas)', borderRadius: 'var(--radius)', fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                ℹ️ This is a read-only view of historical data
-              </div>
-            </div>
-            <SpreadsheetGrid data={commitData} onChange={() => {}} readOnly />
-          </div>
-        ) : (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-            Select a commit to view its data
-          </div>
-        )}
-      </div>
-    </div>
-  );
+interface Props{currentData:SheetData;branch:string;tip:string;canRestore:boolean;onRestore:(oid:string,expectedHead:string,expectedBranch:string)=>Promise<void>}
+export function History({currentData,branch,tip,canRestore,onRestore}:Props){
+ const[commits,setCommits]=useState<CommitInfo[]>([]),[selected,setSelected]=useState<CommitInfo|null>(null),[snapshot,setSnapshot]=useState<SheetData|null>(null),[diff,setDiff]=useState<SnapshotDiff|null>(null),[mode,setMode]=useState<'diff'|'snapshot'>('diff'),[loading,setLoading]=useState(true),[error,setError]=useState(''),[confirm,setConfirm]=useState<{oid:string;head:string;branch:string}|null>(null),[restoring,setRestoring]=useState(false);
+ const request=useRef(0);
+ useEffect(()=>{let active=true;getCommitLog(50).then(c=>{if(active)setCommits(c)}).catch(e=>{if(active)setError(String(e))}).finally(()=>{if(active)setLoading(false)});return()=>{active=false;request.current++}},[]);
+ async function select(commit:CommitInfo){const token=++request.current;setSelected(commit);setSnapshot(null);setDiff(null);setError('');setConfirm(null);try{const next=await readCommitData(commit.oid);const base=commit.parents[0]?await readCommitData(commit.parents[0]):{columns:next.columns,rows:[]};if(token!==request.current)return;setSnapshot(next);setDiff(diffSnapshots(base,next));setMode('diff')}catch(e){if(token===request.current)setError(e instanceof Error?e.message:String(e))}}
+ const restoreDiff=snapshot?diffSnapshots(currentData,snapshot):null;
+ const noChange=!!snapshot&&JSON.stringify(currentData)===JSON.stringify(snapshot);
+ return <div className="history-layout">
+  <div className="history-timeline"><div className="history-title">COMMIT HISTORY <span>latest 50</span></div>{loading?<p className="loading">Loading history...</p>:<div className="history-list">{commits.map(c=><button key={c.oid} className={`commit-card ${selected?.oid===c.oid?'active':''}`} onClick={()=>void select(c)}><div className="commit-message">{c.message}</div><div className="commit-meta"><div>{new Date(c.timestamp).toLocaleString()}</div><div className="commit-oid">{c.oid.slice(0,7)}</div>{c.parents.length>1&&<div className="merge-label">Merge commit</div>}</div></button>)}</div>}</div>
+  <div className="history-detail">{error&&<div className="error-box">{error}</div>}{selected&&snapshot&&diff?<>
+   <div className="history-detail-head"><div className="eyebrow">SNAPSHOT / {selected.oid.slice(0,7)}</div><h2>{selected.message}</h2><p>{selected.parents.length>1?'Merge commit · differences below compare the first parent only.':selected.parents.length?'Compared with its parent commit.':'Initial snapshot compared with an empty dataset.'}</p><div className="history-detail-actions"><button className={`btn ${mode==='diff'?'btn-primary':'btn-secondary'}`} onClick={()=>setMode('diff')}>Changes</button><button className={`btn ${mode==='snapshot'?'btn-primary':'btn-secondary'}`} onClick={()=>setMode('snapshot')}>View snapshot</button><button className="btn btn-secondary restore-button" disabled={!canRestore||noChange||restoring} onClick={()=>setConfirm({oid:selected.oid,head:tip,branch})}>Restore this snapshot</button></div>{!canRestore&&<p className="fine-print">Commit or discard working edits before restoring.</p>}{noChange&&<p className="fine-print">This snapshot matches the current working data.</p>}</div>
+   {mode==='snapshot'?<SpreadsheetGrid data={snapshot} onChange={()=>{}} readOnly/>:<div className="diff-view"><div className="diff-summary"><span>+ {diff.added} added</span><span>− {diff.removed} removed</span><span>~ {diff.modified} modified</span></div>{diff.columnOrderChanged&&<div className="schema-change">Schema changed. Added: {diff.columnsAdded.join(', ')||'none'}. Removed: {diff.columnsRemoved.join(', ')||'none'}. Column ordering is included.</div>}{!diff.rows.length&&<p className="fine-print">No row content changes.</p>}{diff.rows.slice(0,200).map(row=><section className={`diff-row ${row.kind}`} key={row.id}><h3><code>{row.id}</code><span>{row.kind}</span></h3>{row.fields.map(f=><div className="diff-field" key={f.field}><strong>{f.field}</strong><div className="diff-before"><span>BEFORE</span><code>{formatCell(f.before)}</code></div><div className="diff-after"><span>AFTER</span><code>{formatCell(f.after)}</code></div></div>)}</section>)}{diff.rows.length>200&&<p className="fine-print">Showing the first 200 changed rows. Export the repository to inspect the full snapshot.</p>}</div>}
+  </>:<div className="history-empty"><span>↗</span><h2>{selected?'Loading snapshot...':'Every change has a story.'}</h2><p>{selected?'Reading the commit and its parent from your local repository.':'Pick a commit to inspect the exact row and field changes, or restore its content without erasing the past.'}</p><small>Typed values are shown explicitly: "1" is text; 1 is a number.</small></div>}</div>
+  {confirm&&snapshot&&restoreDiff&&<div className="modal-overlay"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="restore-title"><div className="modal-header"><h2 id="restore-title">Restore {confirm.oid.slice(0,7)}?</h2><button aria-label="Close restore" onClick={()=>setConfirm(null)}>×</button></div><div className="modal-body"><p>This replaces the data on <strong>{confirm.branch}</strong> with the selected snapshot and creates a new commit. Existing commits and branches are preserved.</p><div className="diff-summary"><span>+ {restoreDiff.added} added</span><span>− {restoreDiff.removed} removed</span><span>~ {restoreDiff.modified} modified</span></div>{restoreDiff.columnOrderChanged&&<p>The selected snapshot also restores its column schema.</p>}<p className="fine-print">This is a full snapshot restore, not a field-level cherry-pick. Export a backup if you need one. Do not edit this repository in another tab during a write.</p></div><div className="modal-footer"><button className="btn btn-secondary" onClick={()=>setConfirm(null)}>Cancel</button><button className="btn btn-primary" disabled={!canRestore||restoring} onClick={async()=>{setRestoring(true);try{await onRestore(confirm.oid,confirm.head,confirm.branch);setConfirm(null)}finally{setRestoring(false)}}}>{restoring?'Restoring...':'Create restore commit'}</button></div></section></div>}
+ </div>
 }

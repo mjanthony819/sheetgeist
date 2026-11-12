@@ -52,15 +52,15 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
   
   return (
     <div className="grid-container">
-      <div className="spreadsheet">
+      <div className="grid-hint"><span className="desktop-hint">{readOnly ? 'Historical snapshot · read only' : 'Click a cell to edit · commit to save'}</span><span className="phone-hint">{readOnly ? 'Historical snapshot · read only' : 'Tap a record to edit · commit to save'}</span><span>Scroll to explore all fields →</span></div><div className={`spreadsheet ${readOnly ? '' : 'editable-desktop'}`}>
         <table>
           <thead>
             <tr>
               <th>ID</th>
               {data.columns.map(col => (
-                <th key={col}>{col}</th>
+                <th key={col}>{col.replace(/_/g,' ')}</th>
               ))}
-              {!readOnly && <th style={{ width: '60px' }}>Actions</th>}
+              {!readOnly && <th style={{ width: '60px' }}></th>}
             </tr>
           </thead>
           <tbody>
@@ -70,7 +70,7 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
                   {row.id}
                 </td>
                 {data.columns.map(col => (
-                  <td key={`${row.id}-${col}`}>
+                  <td key={`${row.id}-${col}`} data-column={col} data-value={String(row[col] ?? '')}>
                     {readOnly ? (
                       <span>{String(row[col] ?? '')}</span>
                     ) : (
@@ -88,7 +88,7 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
                     <button
                       className="btn btn-icon"
                       onClick={() => handleDeleteRow(row.id)}
-                      title="Delete row"
+                      title="Delete row" aria-label={`Delete ${row.id}`}
                       style={{ color: 'var(--color-danger)' }}
                     >
                       ×
@@ -100,6 +100,7 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
           </tbody>
         </table>
       </div>
+      {!readOnly && <div className="mobile-records">{data.rows.map(row=><details className="record-card" key={row.id}><summary><span>{String(row.name ?? row.id)}<small>{row.id}</small></span>{row.quantity !== undefined && <span className="record-quantity">{String(row.quantity)} units</span>}<span className="record-chevron">+</span></summary><div className="record-fields">{data.columns.map(col=><label key={col}>{col.replace(/_/g,' ')}<input value={String(row[col] ?? '')} aria-label={`mobile ${row.id} ${col}`} onChange={e=>handleCellChange(row.id,col,e.target.value)}/></label>)}</div><button className="record-delete" aria-label={`mobile Delete ${row.id}`} onClick={()=>handleDeleteRow(row.id)}>Delete record</button></details>)}</div>}
       {!readOnly && (
         <div style={{ marginTop: '12px' }}>
           <button className="btn btn-secondary" onClick={handleAddRow}>
