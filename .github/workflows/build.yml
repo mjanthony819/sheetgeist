@@ -14,19 +14,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Expand the initial source package
+      - name: Expand approved source update
         shell: bash
         run: |
-          if [ -f 2-sheetgeist-source.zip ]; then
-            unzip -o 2-sheetgeist-source.zip
-            rm 2-sheetgeist-source.zip
-            cat >> src/index.css <<'CSS'
-          /* Project palette preview: navy, cream and coral. */
-          :root{--color-primary:#19344B;--color-accent:#BB4F3B;--color-canvas:#FAF5EB;--color-surface:#FFFCF5;--color-border:#DDD5C6;--color-text:#172B3A;--color-text-muted:#6D716E}
-          [data-theme="dark"]{--color-primary:#99BDD4;--color-accent:#F18E70;--color-canvas:#101F2B;--color-surface:#172C3C;--color-border:#3A4B55;--color-text:#F8F0E1;--color-text-muted:#B7B9B0}
-          .project-heading{background:linear-gradient(110deg,rgba(25,52,75,.04),transparent 65%,rgba(187,79,59,.07))}.notice{background:rgba(25,52,75,.06)}
-          CSS
-          fi
+          for package in *sheetgeist*.zip; do
+            [ -f "$package" ] || continue
+            unzip -o "$package"
+            rm "$package"
+          done
       - run: npm ci
       - run: npm test -- --run
       - run: npm run build
