@@ -1,12 +1,11 @@
-# Initial owner UI direction (13 Nov 2026)
+# UI design history, 13 November 2026
 
-The owner has asked to reuse his reference colours and compact handcrafted tool UI.
-- Light mode: sky blue structure (#0693C6) and pink signals (#D83995), nearly white canvas (#FCFFFF).
-- Dark mode: blue and orange accents on a readable dark canvas.
-- Avoid oversized buttons, large rounded-card grids, generic AI chat layouts, stripped grey fallbacks and purple/mint default spooky styling.
-- Use a practical spreadsheet desk-tool layout, dense but readable typography, accessible contrast, small-radius corners, real controls. Default light with working theme toggle.
-- Museum demo can be playfully named, but usefulness and professional polish matter more than Halloween gimmicks.
-This supersedes the earlier provisional violet/mint palette in the initial specs. Palette hex values are taken from a prior project implementation of the owner's references, not claimed exact screenshot samples.
+This project note describes design iterations. It is not an authorization record or a standing user preference.
 
-## Later review status
-The initial blue/pink direction and subsequent navy/cream/coral preview were rejected during review. A substantive white/charcoal/lime workbench revision with Inter typography and mobile record editing is under review locally. This is a preview direction, not a recorded final preference or approval. Existing functional constraints remain.
+The initial Kiro implementation used a blue/pink light palette and compact desk-tool controls. Subsequent review rejected both that version and a navy/cream/coral preview.
+
+## Released design
+
+The deployed workbench uses white/charcoal/lime, bundled Inter typography, compact controls, meaningful status colors, small-radius corners and a working dark theme. On phones, expandable record editors replace the wide desktop grid. The layout prioritizes usable sheet, query, history and merge controls over decorative Halloween styling.
+
+Typed commit differences and restore-as-new-commit added technical depth after the Kiro implementation. See KIRO_USAGE.md for provenance and README.md for current limits.

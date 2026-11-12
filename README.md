@@ -4,6 +4,12 @@ A local-first spreadsheet workbench that stitches real Git, SQLite and an editab
 
 Built for Kiroween 2026, Frankenstein category. Synthetic museum inventory is a demonstration fixture, not real customer data.
 
+## Live release
+
+- App: https://mjanthony819.github.io/sheetgeist/
+- Narrated, captioned demo (2:09): https://youtu.be/pqz4zhF7YZo
+- Source: https://github.com/mjanthony819/sheetgeist
+
 ## Run
 
 Node.js 22 or later recommended.
@@ -48,7 +54,7 @@ Schema-changing merges and unrelated histories are rejected. The diff UI display
 
 ## Verification
 
-34 unit/regression tests cover merge scenarios, typed diffs, restore planning and input validation. A separate browser check exercised edits, commits, branch isolation, conflicting merges, preservation of an independent field edit, actual SQLite results, write rejection, reload persistence and Git export. The exported repository was inspected with regular `git fsck` and `git log`, including its two-parent merge. These checks are prototype evidence, not a claim of production reliability or a formal security audit.
+34 unit/regression tests cover merge scenarios, typed diffs, restore planning and input validation. Browser checks against the deployed release exercised edits, commits, branch isolation, conflicting merges, preservation of an independent field edit, actual SQLite results, write rejection, reload persistence and Git export, plus typed diffs, restore preview/cancel/new-commit semantics and phone record editing. The exported repository was inspected with regular `git fsck` and `git log`, including its two-parent merge. These checks are prototype evidence, not a claim of production reliability or a formal security audit.
 
 ## Kiro and AI assistance
 
