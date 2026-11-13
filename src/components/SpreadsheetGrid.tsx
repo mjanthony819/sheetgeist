@@ -5,9 +5,15 @@ interface Props {
   data: SheetData;
   onChange: (data: SheetData) => void;
   readOnly?: boolean;
+  /** Read-only computed columns evaluated by SQLite: name -> row id -> value. */
+  computed?: { names: string[]; values: Record<string, Record<string, unknown>> };
+  onSelectCell?: (rowId: string, column: string) => void;
+  selected?: { rowId: string; column: string } | null;
 }
 
-export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
+export function SpreadsheetGrid({ data, onChange, readOnly = false, computed, onSelectCell, selected }: Props) {
+  const cnames = computed?.names ?? [];
+  const cval = (name: string, id: string) => { const v = computed?.values[name]?.[id]; return v === undefined || v === null ? '' : String(v); };
 
   
   const handleCellChange = (rowId: string, column: string, value: string) => {
@@ -60,6 +66,7 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
               {data.columns.map(col => (
                 <th key={col}>{col.replace(/_/g,' ')}</th>
               ))}
+              {cnames.map(n => <th key={'c-'+n} className="computed-th" title="Computed by a SQLite expression; read only">{n.replace(/_/g,' ')} <small>fx</small></th>)}
               {!readOnly && <th style={{ width: '60px' }}></th>}
             </tr>
           </thead>
@@ -78,11 +85,14 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
                         type="text"
                         value={String(row[col] ?? '')}
                         onChange={(e) => handleCellChange(row.id, col, e.target.value)}
+                        onFocus={() => onSelectCell?.(row.id, col)}
+                        className={selected?.rowId === row.id && selected.column === col ? 'cell-selected' : ''}
                         aria-label={`${row.id} ${col}`}
                       />
                     )}
                   </td>
                 ))}
+                {cnames.map(n => <td key={'c-'+n} className="computed-cell" data-computed={n} data-value={cval(n, row.id)}><span>{cval(n, row.id)}</span></td>)}
                 {!readOnly && (
                   <td>
                     <button
@@ -100,7 +110,7 @@ export function SpreadsheetGrid({ data, onChange, readOnly = false }: Props) {
           </tbody>
         </table>
       </div>
-      {!readOnly && <div className="mobile-records">{data.rows.map(row=><details className="record-card" key={row.id}><summary><span>{String(row.name ?? row.id)}<small>{row.id}</small></span>{row.quantity !== undefined && <span className="record-quantity">{String(row.quantity)} units</span>}<span className="record-chevron">+</span></summary><div className="record-fields">{data.columns.map(col=><label key={col}>{col.replace(/_/g,' ')}<input value={String(row[col] ?? '')} aria-label={`mobile ${row.id} ${col}`} onChange={e=>handleCellChange(row.id,col,e.target.value)}/></label>)}</div><button className="record-delete" aria-label={`mobile Delete ${row.id}`} onClick={()=>handleDeleteRow(row.id)}>Delete record</button></details>)}</div>}
+      {!readOnly && <div className="mobile-records">{data.rows.map(row=><details className="record-card" key={row.id}><summary><span>{String(row.name ?? row.id)}<small>{row.id}</small></span>{row.quantity !== undefined && <span className="record-quantity">{String(row.quantity)} units</span>}<span className="record-chevron">+</span></summary><div className="record-fields">{cnames.map(n=><div className="record-computed" key={'c-'+n}><span>{n.replace(/_/g,' ')} (computed)</span><b>{cval(n,row.id)}</b></div>)}{data.columns.map(col=><label key={col}>{col.replace(/_/g,' ')}<input value={String(row[col] ?? '')} aria-label={`mobile ${row.id} ${col}`} onChange={e=>handleCellChange(row.id,col,e.target.value)}/></label>)}</div><button className="record-delete" aria-label={`mobile Delete ${row.id}`} onClick={()=>handleDeleteRow(row.id)}>Delete record</button></details>)}</div>}
       {!readOnly && (
         <div style={{ marginTop: '12px' }}>
           <button className="btn btn-secondary" onClick={handleAddRow}>

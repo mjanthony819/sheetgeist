@@ -25,3 +25,7 @@ The initial requirements, design and task files in `.kiro/specs/` were generated
 - Code comments: Explaining key integration points
 - README.md: Project overview and setup
 - Merge tests: Documented test scenarios
+
+## Workbook upgrade specs
+
+`specs/workbook-upgrade/` was written by Kiro CLI on 13 November 2026. Kiro was throttled twice, so parts of the implementation, all UI work and several fixes were done outside Kiro; see `KIRO_USAGE.md` for the exact split.

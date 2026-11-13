@@ -17,3 +17,18 @@ The spec made three constraints explicit before implementation: real Git rather 
 Kiro CLI, project steering and spec/task files were used. No custom agents, hooks, MCP integrations, Crew workflows or property-based testing were used. Unit and browser regression tests are not described as property-based tests. No fabricated logs, screenshots or Kiro feature claims are included.
 
 Later user-directed expansion: a new workbench visual design with mobile record editing, typed commit differences and full-snapshot restoration as a new commit were implemented and independently tested after the Kiro build. These additions are not attributed to the earlier Kiro run.
+
+## Workbook upgrade (13 November 2026)
+
+Account: Kiro Free plan (no upgrade, trial or card). The usage page showed 6.43 of 50 credits before the upgrade and 12.32 of 50 after the first run; the final figure is recorded in the project report. Credits reset 12/01.
+
+What Kiro CLI actually wrote (two runs, model "auto"):
+- Run 1: `.kiro/specs/workbook-upgrade/{requirements,design,tasks}.md`, an addition to `.kiro/steering/product.md`, and first versions of `src/lib/workbook.ts`, `workbookSql.ts`, `workbookMerge.ts`, `xlsxio.ts` and the museum workbook fixture in `dataset.ts`. The service then replied "The request was throttled by the service" before tests were written.
+- Run 2: `testSql.ts`, `workbook.test.ts`, `workbookSql.test.ts`, `workbookMerge.test.ts`, and a zip-signature check in `xlsxio.ts`. It was throttled again mid-run. I did not retry or work around the throttle.
+
+What was done outside Kiro (by the AI-assisted integration pass under M J Anthony's direction):
+- Vendoring and checking SheetJS 0.20.3; Git storage for workbooks (`gitWorkbook.ts`) and legacy `data.json` migration; the full UI rewrite (App, History, SheetView, CellHistory, QueryStudio, grid, Help, CSS).
+- Bug fixes found by tests: Kiro's SQL tables used TEXT column affinity, so comparisons, ORDER BY and MIN/MAX on numbers were lexicographic (fixed, regression test added); a Node-only import broke the browser bundle (fixed with an injected loader); one wrong test expectation corrected against an independent calculation.
+- Import hardening (formula non-evaluation reporting, Provenance and computed-column skipping, `id_original`, sheet-rename warnings, size check), `xlsxio.test.ts`, and the Playwright browser suites.
+
+Not used: custom agents, hooks, MCP, Crew, property-based tests. Tests are ordinary example-based tests.

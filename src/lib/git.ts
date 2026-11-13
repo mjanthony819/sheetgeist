@@ -3,7 +3,7 @@ import git from 'isomorphic-git';
 import FS from '@isomorphic-git/lightning-fs';
 import type { SheetData, CommitInfo, BranchInfo } from './types';
 
-const fs = new FS('sheetgeist-fs');
+export const fs = new FS('sheetgeist-fs');
 
 export const GIT_DIR = '/repo';
 export const DATA_FILE = 'data.json';
