@@ -20,7 +20,7 @@ Later user-directed expansion: a new workbench visual design with mobile record 
 
 ## Workbook upgrade (13 November 2026)
 
-Account: Kiro Free plan (no upgrade, trial or card). The usage page showed 6.43 of 50 credits before the upgrade and 12.32 of 50 after the first run; the final figure is recorded in the project report. Credits reset 12/01.
+Account: Kiro Free plan (no upgrade, trial or card). The usage page showed 6.43 of 50 credits before the upgrade and 12.32 of 50 after the first run; after both Kiro runs it showed 17.4 of 50 (checked 13 November 2026, 4:34 PM IST). Credits reset 12/01.
 
 What Kiro CLI actually wrote (two runs, model "auto"):
 - Run 1: `.kiro/specs/workbook-upgrade/{requirements,design,tasks}.md`, an addition to `.kiro/steering/product.md`, and first versions of `src/lib/workbook.ts`, `workbookSql.ts`, `workbookMerge.ts`, `xlsxio.ts` and the museum workbook fixture in `dataset.ts`. The service then replied "The request was throttled by the service" before tests were written.
